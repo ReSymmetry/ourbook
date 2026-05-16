@@ -208,180 +208,6 @@
 
     <div id="panel-memo" class="hidden">
         <div id="memo-list" style="min-height:200px;"></div>
-        <div class="flex gap        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button.secondary {
-            background: transparent;
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        button.small { font-size: 14px; padding: 4px 10px; }
-        .hidden { display: none !important; }
-        .flex { display: flex; }
-        .gap8 { gap: 8px; }
-        .mt8 { margin-top: 8px; }
-        .mb8 { margin-bottom: 8px; }
-        nav {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
-        nav button {
-            background: none;
-            color: var(--sub);
-            font-weight: 500;
-            border: none;
-            padding: 8px;
-        }
-        nav button.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
-
-        .msg-row { display: flex; margin-bottom: 12px; }
-        .msg-mine { justify-content: flex-end; }
-        .msg-other { justify-content: flex-start; }
-        .bubble {
-            max-width: 75%;
-            padding: 10px 14px;
-            border-radius: 18px;
-            box-shadow: var(--shadow);
-        }
-        .bubble-mine { background: #f0ebe3; border-bottom-right-radius: 6px; }
-        .bubble-other { background: white; border-bottom-left-radius: 6px; }
-        .bubble img { max-width: 200px; border-radius: 12px; display: block; }
-        .bubble-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 4px;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .event-card {
-            background: var(--card);
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-        }
-        .event-tag {
-            display: inline-block;
-            background: #f0ebe3;
-            color: var(--accent);
-            border-radius: 20px;
-            padding: 2px 10px;
-            font-size: 13px;
-            margin-right: 6px;
-        }
-
-        #sidebar {
-            position: fixed;
-            right: -320px;
-            top: 0;
-            width: 300px;
-            height: 100%;
-            background: white;
-            padding: 20px;
-            transition: right 0.3s;
-            z-index: 100;
-            box-shadow: -2px 0 8px rgba(0,0,0,0.05);
-        }
-        #sidebar.open { right: 0; }
-        #overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.2);
-            z-index: 99;
-        }
-        #overlay.show { display: block; }
-
-        .timeline-item {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .timeline-dot {
-            min-width: 12px;
-            height: 12px;
-            background: var(--accent);
-            border-radius: 50%;
-            margin-top: 6px;
-        }
-        .timeline-content {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 12px;
-            flex: 1;
-            box-shadow: var(--shadow);
-        }
-        .timeline-content .meta {
-            font-size: 13px;
-            color: var(--sub);
-        }
-
-        #login-page input, #signup-page input { width: 100%; margin-bottom: 12px; }
-        #login-page, #signup-page { max-width: 300px; margin: 60px auto; }
-    </style>
-</head>
-<body>
-
-<!-- 登录页 -->
-<div id="login-page">
-    <h2 style="margin-bottom:20px;">📖 我们的书</h2>
-    <input type="email" id="login-email" placeholder="邮箱">
-    <input type="password" id="login-password" placeholder="密码">
-    <button onclick="handleLogin()" style="width:100%;">登录</button>
-    <p style="text-align:center; margin-top:12px; font-size:14px; color:var(--sub);">
-        还没有账号？<a href="#" onclick="showSignUpPage(); return false;">去注册</a>
-    </p>
-</div>
-
-<!-- 注册页 -->
-<div id="signup-page" class="hidden">
-    <h2 style="margin-bottom:20px;">📝 创建账号</h2>
-    <input type="email" id="signup-email" placeholder="邮箱">
-    <input type="password" id="signup-password" placeholder="密码（至少6位）">
-    <button onclick="handleSignUp()" style="width:100%;">注册</button>
-    <p style="text-align:center; margin-top:12px; font-size:14px; color:var(--sub);">
-        已有账号？<a href="#" onclick="showLoginPage(); return false;">去登录</a>
-    </p>
-</div>
-
-<div id="main-page" class="hidden">
-    <nav>
-        <button id="nav-notes" class="active">💬 纸条</button>
-        <button id="nav-events">📅 约会</button>
-        <button id="nav-memo">🔒 备忘录</button>
-        <button id="nav-book">📖 时光</button>
-        <button id="nav-menu">☰</button>
-    </nav>
-
-    <div id="panel-notes">
-        <div id="notes-list" style="min-height:200px;"></div>
-        <div class="flex gap8 mt8">
-            <input type="text" id="note-input" placeholder="写纸条..." style="flex:1;">
-            <input type="file" id="image-input" accept="image/*" style="display:none;" onchange="sendImage()">
-            <button onclick="document.getElementById('image-input').click()">📷</button>
-            <button onclick="sendLocation()">📍</button>
-            <button onclick="sendNote()">发送</button>
-        </div>
-    </div>
-
-    <div id="panel-events" class="hidden">
-        <div class="flex gap8 mb8">
-            <button onclick="showEventForm('planned')">+ 新约会</button>
-            <button onclick="showEventForm('requested')" class="secondary">🫱 发起请求</button>
-        </div>
-        <div id="events-list"></div>
-    </div>
-
-    <div id="panel-memo" class="hidden">
-        <div id="memo-list" style="min-height:200px;"></div>
         <div class="flex gap8 mt8">
             <input type="text" id="memo-input" placeholder="私人备忘..." style="flex:1;">
             <button onclick="addMemo()">保存</button>
@@ -565,29 +391,272 @@
     $('nav-book').onclick = () => switchPanel('book');
     $('nav-menu').onclick = () => openSidebar();
 
-    async function sendNote() { /* ... 纸条发送逻辑 ... */ }
-    async function sendImage() { /* ... 图片上传逻辑 ... */ }
-    async function sendLocation() { /* ... 位置发送逻辑 ... */ }
-    async function loadNotes() { /* ... 加载纸条逻辑 ... */ }
+    async function sendNote() {
+        const content = $('note-input').value.trim();
+        if (!content) return;
+        if (!currentPartner) return alert('请先绑定伴侣');
+        const { error } = await db.from('notes').insert({
+            content,
+            type: 'text',
+            author_id: currentUser.id,
+            shared_with: currentPartner.id
+        });
+        if (error) return alert('发送失败：' + error.message);
+        $('note-input').value = '';
+        loadNotes();
+    }
+    async function sendImage() {
+        const file = $('image-input').files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) return alert('请上传图片文件');
+        if (!currentPartner) return alert('请先绑定伴侣');
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+        const { error: uploadError } = await db.storage.from('images').upload(fileName, file);
+        if (uploadError) return alert('图片上传失败：' + uploadError.message);
+        const { data: { publicUrl } } = db.storage.from('images').getPublicUrl(fileName);
+        await db.from('notes').insert({
+            content: publicUrl,
+            type: 'image',
+            author_id: currentUser.id,
+            shared_with: currentPartner.id
+        });
+        loadNotes();
+    }
+    async function sendLocation() {
+        if (!navigator.geolocation) return alert('不支持定位');
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const content = `${lat},${lng}`;
+            await db.from('notes').insert({
+                content,
+                type: 'location',
+                author_id: currentUser.id,
+                shared_with: currentPartner.id
+            });
+            loadNotes();
+        }, () => alert('定位失败'));
+    }
+    async function loadNotes() {
+        if (!currentPartner) {
+            $('notes-list').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可互发纸条</p>';
+            return;
+        }
+        const { data: notes, error } = await db.from('notes')
+            .select('*')
+            .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) return console.error(error);
+        const container = $('notes-list');
+        container.innerHTML = '';
+        notes.forEach(note => {
+            const isMine = note.author_id === currentUser.id;
+            const div = document.createElement('div');
+            div.className = `msg-row ${isMine ? 'msg-mine' : 'msg-other'}`;
+            let contentHTML = '';
+            if (note.type === 'image') {
+                contentHTML = `<img src="${escapeHtml(note.content)}" alt="图片">`;
+            } else if (note.type === 'location') {
+                const [lat, lng] = note.content.split(',');
+                contentHTML = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">📍 查看位置</a>`;
+            } else {
+                contentHTML = escapeHtml(note.content);
+            }
+            div.innerHTML = `
+                <div class="bubble ${isMine ? 'bubble-mine' : 'bubble-other'}">
+                    <div>${contentHTML}</div>
+                    <div class="bubble-meta">
+                        <span>${isMine ? '我' : (currentPartner?.email || 'TA')}</span>
+                        <span>${formatTime(note.created_at)}</span>
+                    </div>
+                </div>`;
+            container.appendChild(div);
+        });
+    }
 
-    async function addMemo() { /* ... */ }
-    async function loadMemos() { /* ... */ }
+    async function addMemo() {
+        const content = $('memo-input').value.trim();
+        if (!content) return;
+        const { error } = await db.from('memos').insert({
+            content,
+            owner_id: currentUser.id
+        });
+        if (error) return alert('保存失败');
+        $('memo-input').value = '';
+        loadMemos();
+    }
+    async function loadMemos() {
+        const { data: memos } = await db.from('memos')
+            .select('*')
+            .eq('owner_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        $('memo-list').innerHTML = memos.map(m => `<p>${escapeHtml(m.content)} <small>${formatTime(m.created_at)}</small></p>`).join('');
+    }
 
     let currentEventStatus = 'planned';
-    function showEventForm(status) { /* ... */ }
+    function showEventForm(status) {
+        currentEventStatus = status;
+        $('event-modal-title').innerText = status === 'requested' ? '发起请求' : '新约会';
+        $('event-status').value = status;
+        $('event-title').value = '';
+        $('event-date').value = '';
+        $('event-location').value = '';
+        $('event-note').value = '';
+        $('event-category').value = 'food';
+        show('event-modal');
+    }
     function closeEventModal() { hide('event-modal'); }
-    async function saveEvent() { /* ... */ }
-    async function loadEvents() { /* ... */ }
-    async function respondRequest(eventId, action) { /* ... */ }
+    async function saveEvent() {
+        const title = $('event-title').value.trim();
+        const date = $('event-date').value;
+        const location = $('event-location').value.trim();
+        const category = $('event-category').value;
+        const note = $('event-note').value.trim();
+        const status = $('event-status').value;
+        if (!title || !date) return alert('标题和时间必填');
+        if (!currentPartner) return alert('请先绑定伴侣');
+        const { error } = await db.from('events').insert({
+            title,
+            event_date: new Date(date).toISOString(),
+            location,
+            category,
+            note,
+            status,
+            author_id: currentUser.id,
+            shared_with: currentPartner.id
+        });
+        if (error) return alert('保存失败：' + error.message);
+        closeEventModal();
+        loadEvents();
+    }
+    async function loadEvents() {
+        if (!currentPartner) {
+            $('events-list').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可规划约会</p>';
+            return;
+        }
+        const { data: events } = await db.from('events')
+            .select('*')
+            .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
+            .order('event_date', { ascending: true });
+        const container = $('events-list');
+        container.innerHTML = '';
+        events.forEach(e => {
+            const isMine = e.author_id === currentUser.id;
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.innerHTML = `
+                <div class="flex" style="justify-content:space-between;">
+                    <strong>${escapeHtml(e.title)}</strong>
+                    <span class="event-tag">${escapeHtml(e.category)}</span>
+                </div>
+                <p>📅 ${formatTime(e.event_date)}</p>
+                <p>📍 ${escapeHtml(e.location || '未指定')}</p>
+                <p>📝 ${escapeHtml(e.note || '无')}</p>
+                <p>状态：${e.status === 'requested' ? '🟡 待确认' : '✅ 已约定'}</p>
+                ${(e.status === 'requested' && !isMine) ? 
+                    `<button onclick="respondRequest('${e.id}','accept')" class="small">同意</button> 
+                     <button onclick="respondRequest('${e.id}','reject')" class="small">婉拒</button>` : ''}
+            `;
+            container.appendChild(card);
+        });
+    }
+    async function respondRequest(eventId, action) {
+        const newStatus = action === 'accept' ? 'planned' : 'cancelled';
+        const { error } = await db.from('events').update({ status: newStatus }).eq('id', eventId);
+        if (error) return alert('操作失败');
+        loadEvents();
+    }
 
-    async function loadAnniversaries() { /* ... */ }
-    async function addAnniversary() { /* ... */ }
-    async function requestFromAnniversary(annId) { /* ... */ }
+    async function loadAnniversaries() {
+        if (!currentPartner) return;
+        const { data } = await db.from('anniversaries')
+            .select('*')
+            .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
+            .order('date', { ascending: true });
+        const container = $('anniversary-list');
+        container.innerHTML = data.map(a => `
+            <div style="font-size:14px; margin-bottom:4px;">
+                ${escapeHtml(a.title)} - ${a.date}
+                <button onclick="requestFromAnniversary('${a.id}')" class="small">📅 约她</button>
+            </div>`).join('');
+    }
+    async function addAnniversary() {
+        const title = prompt('纪念日名称：');
+        const date = prompt('日期 (YYYY-MM-DD)：');
+        if (!title || !date) return;
+        if (!currentPartner) return alert('请先绑定伴侣');
+        await db.from('anniversaries').insert({
+            title,
+            date,
+            author_id: currentUser.id,
+            shared_with: currentPartner.id
+        });
+        loadAnniversaries();
+    }
+    async function requestFromAnniversary(annId) {
+        const { data: ann } = await db.from('anniversaries').select('*').eq('id', annId).single();
+        if (!ann) return;
+        $('event-title').value = ann.title;
+        $('event-date').value = ann.date + 'T00:00';
+        showEventForm('requested');
+    }
 
-    async function loadTimeline() { /* ... */ }
+    async function loadTimeline() {
+        if (!currentPartner) {
+            $('timeline').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可回顾时光</p>';
+            return;
+        }
+        const [notesRes, eventsRes, annsRes] = await Promise.all([
+            db.from('notes').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`),
+            db.from('events').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`),
+            db.from('anniversaries').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
+        ]);
+        let items = [];
+        (notesRes.data || []).forEach(n => items.push({ type:'note', time: n.created_at, data: n }));
+        (eventsRes.data || []).forEach(e => items.push({ type:'event', time: e.event_date, data: e }));
+        (annsRes.data || []).forEach(a => items.push({ type:'anniversary', time: a.date, data: a }));
+        items.sort((a,b) => new Date(a.time) - new Date(b.time));
+        const html = items.map(item => {
+            if (item.type === 'note') return `
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="meta">💬 纸条 · ${formatTime(item.time)}</div>
+                        <div>${escapeHtml(item.data.content)}</div>
+                    </div>
+                </div>`;
+            if (item.type === 'event') return `
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="meta">📅 ${escapeHtml(item.data.title)} · ${formatTime(item.time)}</div>
+                        <div>${escapeHtml(item.data.location||'')} ${escapeHtml(item.data.note||'')}</div>
+                    </div>
+                </div>`;
+            if (item.type === 'anniversary') return `
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="meta">❤️ 纪念日 · ${item.data.date}</div>
+                        <div>${escapeHtml(item.data.title)}</div>
+                    </div>
+                </div>`;
+        }).join('');
+        $('timeline').innerHTML = html || '<p>还没有共同记录，开始写吧。</p>';
+    }
 
-    function openSidebar() { /* ... */ }
-    function closeSidebar() { /* ... */ }
+    function openSidebar() {
+        $('sidebar').classList.add('open');
+        $('overlay').classList.add('show');
+        loadPartner();
+        loadAnniversaries();
+    }
+    function closeSidebar() {
+        $('sidebar').classList.remove('open');
+        $('overlay').classList.remove('show');
+    }
 
     setInterval(() => {
         if (!document.hidden && currentUser) {
