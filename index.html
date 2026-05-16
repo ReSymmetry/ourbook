@@ -208,6 +208,180 @@
 
     <div id="panel-memo" class="hidden">
         <div id="memo-list" style="min-height:200px;"></div>
+        <div class="flex gap        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button.secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+        button.small { font-size: 14px; padding: 4px 10px; }
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .gap8 { gap: 8px; }
+        .mt8 { margin-top: 8px; }
+        .mb8 { margin-bottom: 8px; }
+        nav {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        nav button {
+            background: none;
+            color: var(--sub);
+            font-weight: 500;
+            border: none;
+            padding: 8px;
+        }
+        nav button.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+        .msg-row { display: flex; margin-bottom: 12px; }
+        .msg-mine { justify-content: flex-end; }
+        .msg-other { justify-content: flex-start; }
+        .bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+        .bubble-mine { background: #f0ebe3; border-bottom-right-radius: 6px; }
+        .bubble-other { background: white; border-bottom-left-radius: 6px; }
+        .bubble img { max-width: 200px; border-radius: 12px; display: block; }
+        .bubble-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .event-card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .event-tag {
+            display: inline-block;
+            background: #f0ebe3;
+            color: var(--accent);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 13px;
+            margin-right: 6px;
+        }
+
+        #sidebar {
+            position: fixed;
+            right: -320px;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: white;
+            padding: 20px;
+            transition: right 0.3s;
+            z-index: 100;
+            box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+        }
+        #sidebar.open { right: 0; }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.2);
+            z-index: 99;
+        }
+        #overlay.show { display: block; }
+
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .timeline-dot {
+            min-width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-top: 6px;
+        }
+        .timeline-content {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            flex: 1;
+            box-shadow: var(--shadow);
+        }
+        .timeline-content .meta {
+            font-size: 13px;
+            color: var(--sub);
+        }
+
+        #login-page input, #signup-page input { width: 100%; margin-bottom: 12px; }
+        #login-page, #signup-page { max-width: 300px; margin: 60px auto; }
+    </style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div id="login-page">
+    <h2 style="margin-bottom:20px;">📖 我们的书</h2>
+    <input type="email" id="login-email" placeholder="邮箱">
+    <input type="password" id="login-password" placeholder="密码">
+    <button onclick="handleLogin()" style="width:100%;">登录</button>
+    <p style="text-align:center; margin-top:12px; font-size:14px; color:var(--sub);">
+        还没有账号？<a href="#" onclick="showSignUpPage(); return false;">去注册</a>
+    </p>
+</div>
+
+<!-- 注册页 -->
+<div id="signup-page" class="hidden">
+    <h2 style="margin-bottom:20px;">📝 创建账号</h2>
+    <input type="email" id="signup-email" placeholder="邮箱">
+    <input type="password" id="signup-password" placeholder="密码（至少6位）">
+    <button onclick="handleSignUp()" style="width:100%;">注册</button>
+    <p style="text-align:center; margin-top:12px; font-size:14px; color:var(--sub);">
+        已有账号？<a href="#" onclick="showLoginPage(); return false;">去登录</a>
+    </p>
+</div>
+
+<div id="main-page" class="hidden">
+    <nav>
+        <button id="nav-notes" class="active">💬 纸条</button>
+        <button id="nav-events">📅 约会</button>
+        <button id="nav-memo">🔒 备忘录</button>
+        <button id="nav-book">📖 时光</button>
+        <button id="nav-menu">☰</button>
+    </nav>
+
+    <div id="panel-notes">
+        <div id="notes-list" style="min-height:200px;"></div>
+        <div class="flex gap8 mt8">
+            <input type="text" id="note-input" placeholder="写纸条..." style="flex:1;">
+            <input type="file" id="image-input" accept="image/*" style="display:none;" onchange="sendImage()">
+            <button onclick="document.getElementById('image-input').click()">📷</button>
+            <button onclick="sendLocation()">📍</button>
+            <button onclick="sendNote()">发送</button>
+        </div>
+    </div>
+
+    <div id="panel-events" class="hidden">
+        <div class="flex gap8 mb8">
+            <button onclick="showEventForm('planned')">+ 新约会</button>
+            <button onclick="showEventForm('requested')" class="secondary">🫱 发起请求</button>
+        </div>
+        <div id="events-list"></div>
+    </div>
+
+    <div id="panel-memo" class="hidden">
+        <div id="memo-list" style="min-height:200px;"></div>
         <div class="flex gap8 mt8">
             <input type="text" id="memo-input" placeholder="私人备忘..." style="flex:1;">
             <button onclick="addMemo()">保存</button>
