@@ -190,6 +190,7 @@
 
     <div id="panel-notes">
         <div id="notes-list" style="min-height:200px;"></div>
+        <div id="notes-list" style="max-height: 60vh; overflow-y: auto; min-height:200px;"></div>
         <div class="flex gap8 mt8">
             <input type="text" id="note-input" placeholder="写纸条..." style="flex:1;">
             <input type="file" id="image-input" accept="image/*" style="display:none;" onchange="sendImage()">
@@ -464,7 +465,7 @@
         const { data: notes, error } = await db.from('notes')
             .select('*')
             .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
-            .order('created_at', { ascending: false })
+            .order('created_at', { ascending: ture })
             .limit(50);
         if (error) return console.error(error);
         const container = $('notes-list');
@@ -492,6 +493,7 @@
                 </div>`;
             container.appendChild(div);
         });
+        container.scrollTop = container.scrollHeight;
     }
 
     async function addMemo() {
