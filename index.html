@@ -464,7 +464,7 @@
         const { data: notes, error } = await db.from('notes')
             .select('*')
             .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
-            .order('created_at', { ascending: ture })
+            .order('created_at', { ascending: true })
             .limit(50);
         if (error) return console.error(error);
         const container = $('notes-list');
