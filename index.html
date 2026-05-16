@@ -267,7 +267,7 @@
 
         // ========== 全局状态 ==========
         let currentUser = null;
-        let currentPartner = null;       // { id, email }
+        let currentPartner = null;
         let currentPanel = 'notes';
 
         // ========== 工具函数 ==========
@@ -285,7 +285,6 @@
 
         // ========== 初始化 ==========
         window.addEventListener('load', async () => {
-            // 检查是否有已登录的会话
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
                 currentUser = session.user;
@@ -322,14 +321,12 @@
 
         // ========== 伴侣绑定 ==========
         async function loadPartner() {
-            // 从 profiles 表获取自己的 partner_id
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('partner_id')
                 .eq('id', currentUser.id)
                 .single();
             if (profile?.partner_id) {
-                // 获取伴侣的邮箱（通过 profiles 表）
                 const { data: partnerProfile } = await supabase
                     .from('profiles')
                     .select('id, email')
@@ -347,7 +344,6 @@
         async function bindPartner() {
             const email = $('partner-email').value.trim();
             if (!email) return alert('请输入伴侣的注册邮箱');
-            // 查找伴侣的 profile
             const { data: partnerProfile } = await supabase
                 .from('profiles')
                 .select('id, email, partner_id')
@@ -355,13 +351,9 @@
                 .single();
             if (!partnerProfile) return alert('该用户不存在');
             if (partnerProfile.id === currentUser.id) return alert('不能绑定自己');
-
-            // 检查对方是否已经绑定了别人
             if (partnerProfile.partner_id && partnerProfile.partner_id !== currentUser.id) {
                 return alert('对方已经绑定了其他伴侣');
             }
-
-            // 更新双方的 partner_id
             const { error: e1 } = await supabase
                 .from('profiles')
                 .update({ partner_id: partnerProfile.id })
@@ -413,14 +405,12 @@
             const file = $('image-input').files[0];
             if (!file) return;
             if (!currentPartner) return alert('请先绑定伴侣');
-            // 上传到 Supabase Storage
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}.${fileExt}`;
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('images')
                 .upload(fileName, file);
             if (uploadError) return alert('图片上传失败：' + uploadError.message);
-            // 获取公开 URL
             const { data: { publicUrl } } = supabase.storage
                 .from('images')
                 .getPublicUrl(fileName);
@@ -509,7 +499,7 @@
         }
 
         // ========== 约会 ==========
-        let currentEventStatus = 'planned'; // 用于表单
+        let currentEventStatus = 'planned';
         function showEventForm(status) {
             currentEventStatus = status;
             $('event-modal-title').innerText = status === 'requested' ? '发起请求' : '新约会';
