@@ -246,10 +246,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ========== 替换为你的 Supabase 凭证 ==========
-        const SUPABASE_URL = 'https://mjcvcxfyffgaxawdkuow.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_QI9qne6m0CQq3JnYXpGSLw_LMNFaJ_M';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ========== 唯一一次创建客户端实例，使用不同的变量名避免与全局 supabase 冲突 ==========
+        const _supabaseUrl = 'https://你的项目ID.supabase.co';
+        const _supabaseKey = '你的anon key';
+        const db = window.supabase.createClient(_supabaseUrl, _supabaseKey);  // 全部用 db 调用
 
         let currentUser = null;
         let currentPartner = null;
@@ -266,9 +266,14 @@
             if (isToday) return time;
             return `${d.getMonth()+1}/${d.getDate()} ${time}`;
         }
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
 
         window.addEventListener('load', async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await db.auth.getSession();
             if (session?.user) {
                 currentUser = session.user;
                 afterLogin();
@@ -278,7 +283,7 @@
         async function handleLogin() {
             const email = $('login-email').value.trim();
             const password = $('login-password').value;
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await db.auth.signInWithPassword({ email, password });
             if (error) return alert('登录失败：' + error.message);
             currentUser = data.user;
             afterLogin();
@@ -286,36 +291,38 @@
         async function handleSignUp() {
             const email = $('login-email').value.trim();
             const password = $('login-password').value;
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const { data, error } = await db.auth.signUp({ email, password });
             if (error) return alert('注册失败：' + error.message);
             alert('注册成功！请登录。');
         }
         async function afterLogin() {
+            // 确保 profiles 存在
+            const { data: profile } = await db.from('profiles').select('id').eq('id', currentUser.id).single();
+            if (!profile) {
+                await db.from('profiles').insert({ id: currentUser.id });
+            }
             hide('login-page');
             show('main-page');
             await loadPartner();
             switchPanel('notes');
         }
         async function logout() {
-            await supabase.auth.signOut();
+            await db.auth.signOut();
             location.reload();
         }
 
         async function loadPartner() {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('partner_id')
-                .eq('id', currentUser.id)
-                .single();
+            const { data: profile } = await db.from('profiles').select('partner_id').eq('id', currentUser.id).single();
             if (profile?.partner_id) {
-                const { data: partnerProfile } = await supabase
-                    .from('profiles')
-                    .select('id, email')
-                    .eq('id', profile.partner_id)
-                    .single();
+                const { data: partnerProfile } = await db.from('profiles').select('id, email').eq('id', profile.partner_id).single();
                 if (partnerProfile) {
                     currentPartner = partnerProfile;
                     $('partner-status').innerText = `已绑定：${partnerProfile.email}`;
+                } else {
+                    // 伴侣 profile 被删除，清除绑定
+                    await db.from('profiles').update({ partner_id: null }).eq('id', currentUser.id);
+                    currentPartner = null;
+                    $('partner-status').innerText = '未绑定';
                 }
             } else {
                 currentPartner = null;
@@ -325,25 +332,19 @@
         async function bindPartner() {
             const email = $('partner-email').value.trim();
             if (!email) return alert('请输入伴侣的注册邮箱');
-            const { data: partnerProfile } = await supabase
-                .from('profiles')
-                .select('id, email, partner_id')
-                .eq('email', email)
-                .single();
+            const { data: partnerProfile } = await db.from('profiles').select('id, email, partner_id').eq('email', email).single();
             if (!partnerProfile) return alert('该用户不存在');
             if (partnerProfile.id === currentUser.id) return alert('不能绑定自己');
             if (partnerProfile.partner_id && partnerProfile.partner_id !== currentUser.id) {
                 return alert('对方已经绑定了其他伴侣');
             }
-            const { error: e1 } = await supabase
-                .from('profiles')
-                .update({ partner_id: partnerProfile.id })
-                .eq('id', currentUser.id);
-            const { error: e2 } = await supabase
-                .from('profiles')
-                .update({ partner_id: currentUser.id })
-                .eq('id', partnerProfile.id);
-            if (e1 || e2) return alert('绑定失败，请重试');
+            const { error: e1 } = await db.from('profiles').update({ partner_id: partnerProfile.id }).eq('id', currentUser.id);
+            const { error: e2 } = await db.from('profiles').update({ partner_id: currentUser.id }).eq('id', partnerProfile.id);
+            if (e1 || e2) {
+                // 回滚：清除刚设置的 partner_id
+                await db.from('profiles').update({ partner_id: null }).eq('id', currentUser.id);
+                return alert('绑定失败，请重试');
+            }
             currentPartner = { id: partnerProfile.id, email: partnerProfile.email };
             $('partner-status').innerText = `已绑定：${partnerProfile.email}`;
             alert('绑定成功！');
@@ -370,7 +371,7 @@
             const content = $('note-input').value.trim();
             if (!content) return;
             if (!currentPartner) return alert('请先绑定伴侣');
-            const { error } = await supabase.from('notes').insert({
+            const { error } = await db.from('notes').insert({
                 content,
                 type: 'text',
                 author_id: currentUser.id,
@@ -383,17 +384,14 @@
         async function sendImage() {
             const file = $('image-input').files[0];
             if (!file) return;
+            if (!file.type.startsWith('image/')) return alert('请上传图片文件');
             if (!currentPartner) return alert('请先绑定伴侣');
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('images')
-                .upload(fileName, file);
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+            const { error: uploadError } = await db.storage.from('images').upload(fileName, file);
             if (uploadError) return alert('图片上传失败：' + uploadError.message);
-            const { data: { publicUrl } } = supabase.storage
-                .from('images')
-                .getPublicUrl(fileName);
-            await supabase.from('notes').insert({
+            const { data: { publicUrl } } = db.storage.from('images').getPublicUrl(fileName);
+            await db.from('notes').insert({
                 content: publicUrl,
                 type: 'image',
                 author_id: currentUser.id,
@@ -407,7 +405,7 @@
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
                 const content = `${lat},${lng}`;
-                await supabase.from('notes').insert({
+                await db.from('notes').insert({
                     content,
                     type: 'location',
                     author_id: currentUser.id,
@@ -421,8 +419,7 @@
                 $('notes-list').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可互发纸条</p>';
                 return;
             }
-            const { data: notes, error } = await supabase
-                .from('notes')
+            const { data: notes, error } = await db.from('notes')
                 .select('*')
                 .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
                 .order('created_at', { ascending: false })
@@ -436,12 +433,12 @@
                 div.className = `msg-row ${isMine ? 'msg-mine' : 'msg-other'}`;
                 let contentHTML = '';
                 if (note.type === 'image') {
-                    contentHTML = `<img src="${note.content}" alt="图片">`;
+                    contentHTML = `<img src="${escapeHtml(note.content)}" alt="图片">`;
                 } else if (note.type === 'location') {
                     const [lat, lng] = note.content.split(',');
                     contentHTML = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">📍 查看位置</a>`;
                 } else {
-                    contentHTML = note.content;
+                    contentHTML = escapeHtml(note.content);
                 }
                 div.innerHTML = `
                     <div class="bubble ${isMine ? 'bubble-mine' : 'bubble-other'}">
@@ -453,13 +450,12 @@
                     </div>`;
                 container.appendChild(div);
             });
-            container.scrollTop = container.scrollHeight;
         }
 
         async function addMemo() {
             const content = $('memo-input').value.trim();
             if (!content) return;
-            const { error } = await supabase.from('memos').insert({
+            const { error } = await db.from('memos').insert({
                 content,
                 owner_id: currentUser.id
             });
@@ -468,12 +464,11 @@
             loadMemos();
         }
         async function loadMemos() {
-            const { data: memos } = await supabase
-                .from('memos')
+            const { data: memos } = await db.from('memos')
                 .select('*')
                 .eq('owner_id', currentUser.id)
                 .order('created_at', { ascending: false });
-            $('memo-list').innerHTML = memos.map(m => `<p>${m.content} <small>${formatTime(m.created_at)}</small></p>`).join('');
+            $('memo-list').innerHTML = memos.map(m => `<p>${escapeHtml(m.content)} <small>${formatTime(m.created_at)}</small></p>`).join('');
         }
 
         let currentEventStatus = 'planned';
@@ -481,6 +476,12 @@
             currentEventStatus = status;
             $('event-modal-title').innerText = status === 'requested' ? '发起请求' : '新约会';
             $('event-status').value = status;
+            // 重置表单
+            $('event-title').value = '';
+            $('event-date').value = '';
+            $('event-location').value = '';
+            $('event-note').value = '';
+            $('event-category').value = 'food';
             show('event-modal');
         }
         function closeEventModal() { hide('event-modal'); }
@@ -493,7 +494,7 @@
             const status = $('event-status').value;
             if (!title || !date) return alert('标题和时间必填');
             if (!currentPartner) return alert('请先绑定伴侣');
-            const { error } = await supabase.from('events').insert({
+            const { error } = await db.from('events').insert({
                 title,
                 event_date: new Date(date).toISOString(),
                 location,
@@ -509,11 +510,10 @@
         }
         async function loadEvents() {
             if (!currentPartner) {
-                $('events-list').innerHTML = '<p>绑定伴侣后可规划约会</p>';
+                $('events-list').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可规划约会</p>';
                 return;
             }
-            const { data: events } = await supabase
-                .from('events')
+            const { data: events } = await db.from('events')
                 .select('*')
                 .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
                 .order('event_date', { ascending: true });
@@ -525,12 +525,12 @@
                 card.className = 'event-card';
                 card.innerHTML = `
                     <div class="flex" style="justify-content:space-between;">
-                        <strong>${e.title}</strong>
-                        <span class="event-tag">${e.category}</span>
+                        <strong>${escapeHtml(e.title)}</strong>
+                        <span class="event-tag">${escapeHtml(e.category)}</span>
                     </div>
                     <p>📅 ${formatTime(e.event_date)}</p>
-                    <p>📍 ${e.location || '未指定'}</p>
-                    <p>📝 ${e.note || '无'}</p>
+                    <p>📍 ${escapeHtml(e.location || '未指定')}</p>
+                    <p>📝 ${escapeHtml(e.note || '无')}</p>
                     <p>状态：${e.status === 'requested' ? '🟡 待确认' : '✅ 已约定'}</p>
                     ${(e.status === 'requested' && !isMine) ? 
                         `<button onclick="respondRequest('${e.id}','accept')" class="small">同意</button> 
@@ -541,25 +541,21 @@
         }
         async function respondRequest(eventId, action) {
             const newStatus = action === 'accept' ? 'planned' : 'cancelled';
-            const { error } = await supabase
-                .from('events')
-                .update({ status: newStatus })
-                .eq('id', eventId);
+            const { error } = await db.from('events').update({ status: newStatus }).eq('id', eventId);
             if (error) return alert('操作失败');
             loadEvents();
         }
 
         async function loadAnniversaries() {
             if (!currentPartner) return;
-            const { data } = await supabase
-                .from('anniversaries')
+            const { data } = await db.from('anniversaries')
                 .select('*')
                 .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
                 .order('date', { ascending: true });
             const container = $('anniversary-list');
             container.innerHTML = data.map(a => `
                 <div style="font-size:14px; margin-bottom:4px;">
-                    ${a.title} - ${a.date}
+                    ${escapeHtml(a.title)} - ${a.date}
                     <button onclick="requestFromAnniversary('${a.id}')" class="small">📅 约她</button>
                 </div>`).join('');
         }
@@ -568,7 +564,7 @@
             const date = prompt('日期 (YYYY-MM-DD)：');
             if (!title || !date) return;
             if (!currentPartner) return alert('请先绑定伴侣');
-            await supabase.from('anniversaries').insert({
+            await db.from('anniversaries').insert({
                 title,
                 date,
                 author_id: currentUser.id,
@@ -577,26 +573,22 @@
             loadAnniversaries();
         }
         async function requestFromAnniversary(annId) {
-            const { data: ann } = await supabase
-                .from('anniversaries')
-                .select('*')
-                .eq('id', annId)
-                .single();
+            const { data: ann } = await db.from('anniversaries').select('*').eq('id', annId).single();
             if (!ann) return;
             $('event-title').value = ann.title;
-            $('event-date').value = ann.date;
+            $('event-date').value = ann.date + 'T00:00';  // 修正日期格式
             showEventForm('requested');
         }
 
         async function loadTimeline() {
             if (!currentPartner) {
-                $('timeline').innerHTML = '<p>绑定伴侣后可回顾时光</p>';
+                $('timeline').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可回顾时光</p>';
                 return;
             }
             const [notesRes, eventsRes, annsRes] = await Promise.all([
-                supabase.from('notes').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`),
-                supabase.from('events').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`),
-                supabase.from('anniversaries').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
+                db.from('notes').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`),
+                db.from('events').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`),
+                db.from('anniversaries').select('*').or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
             ]);
             let items = [];
             (notesRes.data || []).forEach(n => items.push({ type:'note', time: n.created_at, data: n }));
@@ -609,15 +601,15 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <div class="meta">💬 纸条 · ${formatTime(item.time)}</div>
-                            <div>${item.data.content}</div>
+                            <div>${escapeHtml(item.data.content)}</div>
                         </div>
                     </div>`;
                 if (item.type === 'event') return `
                     <div class="timeline-item">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
-                            <div class="meta">📅 ${item.data.title} · ${formatTime(item.time)}</div>
-                            <div>${item.data.location||''} ${item.data.note||''}</div>
+                            <div class="meta">📅 ${escapeHtml(item.data.title)} · ${formatTime(item.time)}</div>
+                            <div>${escapeHtml(item.data.location||'')} ${escapeHtml(item.data.note||'')}</div>
                         </div>
                     </div>`;
                 if (item.type === 'anniversary') return `
@@ -625,7 +617,7 @@
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
                             <div class="meta">❤️ 纪念日 · ${item.data.date}</div>
-                            <div>${item.data.title}</div>
+                            <div>${escapeHtml(item.data.title)}</div>
                         </div>
                     </div>`;
             }).join('');
@@ -650,12 +642,6 @@
                 if (currentPanel === 'memo') loadMemos();
             }
         }, 5000);
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js');
-            });
-        }
     </script>
 </body>
 </html>
