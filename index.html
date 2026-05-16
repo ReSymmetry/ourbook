@@ -67,7 +67,6 @@
         }
         nav button.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
 
-        /* 纸条气泡 */
         .msg-row { display: flex; margin-bottom: 12px; }
         .msg-mine { justify-content: flex-end; }
         .msg-other { justify-content: flex-start; }
@@ -88,7 +87,6 @@
             opacity: 0.7;
         }
 
-        /* 约会卡片 */
         .event-card {
             background: var(--card);
             border-radius: 14px;
@@ -106,7 +104,6 @@
             margin-right: 6px;
         }
 
-        /* 侧边栏 */
         #sidebar {
             position: fixed;
             right: -320px;
@@ -129,7 +126,6 @@
         }
         #overlay.show { display: block; }
 
-        /* 时光轴 */
         .timeline-item {
             display: flex;
             gap: 12px;
@@ -159,7 +155,6 @@
     </style>
 </head>
 <body>
-    <!-- 登录页 -->
     <div id="login-page">
         <h2 style="margin-bottom:20px;">📖 我们的书</h2>
         <input type="email" id="login-email" placeholder="邮箱">
@@ -168,9 +163,7 @@
         <button onclick="handleSignUp()" class="secondary" style="width:100%; margin-top:8px;">注册</button>
     </div>
 
-    <!-- 主界面 -->
     <div id="main-page" class="hidden">
-        <!-- 导航 -->
         <nav>
             <button id="nav-notes" class="active">💬 纸条</button>
             <button id="nav-events">📅 约会</button>
@@ -179,7 +172,6 @@
             <button id="nav-menu">☰</button>
         </nav>
 
-        <!-- 纸条面板 -->
         <div id="panel-notes">
             <div id="notes-list" style="min-height:200px;"></div>
             <div class="flex gap8 mt8">
@@ -191,7 +183,6 @@
             </div>
         </div>
 
-        <!-- 约会面板 -->
         <div id="panel-events" class="hidden">
             <div class="flex gap8 mb8">
                 <button onclick="showEventForm('planned')">+ 新约会</button>
@@ -200,7 +191,6 @@
             <div id="events-list"></div>
         </div>
 
-        <!-- 备忘录面板 -->
         <div id="panel-memo" class="hidden">
             <div id="memo-list" style="min-height:200px;"></div>
             <div class="flex gap8 mt8">
@@ -209,14 +199,12 @@
             </div>
         </div>
 
-        <!-- 时光轴面板 -->
         <div id="panel-book" class="hidden">
             <h3 style="margin-bottom:16px;">我们的故事</h3>
             <div id="timeline"></div>
         </div>
     </div>
 
-    <!-- 侧边栏（设置、纪念日、绑定） -->
     <div id="overlay" onclick="closeSidebar()"></div>
     <div id="sidebar">
         <div class="flex" style="justify-content:space-between; align-items:center;">
@@ -237,7 +225,6 @@
         <button onclick="logout()" class="secondary" style="margin-top:20px; width:100%;">退出登录</button>
     </div>
 
-    <!-- 约会/请求表单弹窗 -->
     <div id="event-modal" class="hidden" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:white; padding:20px; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:200; width:90%; max-width:400px;">
         <h3 id="event-modal-title">新约会</h3>
         <input type="text" id="event-title" placeholder="标题" style="width:100%; margin-bottom:8px;">
@@ -257,7 +244,6 @@
         <input type="hidden" id="event-status" value="planned">
     </div>
 
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // ========== 替换为你的 Supabase 凭证 ==========
@@ -265,12 +251,10 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_QI9qne6m0CQq3JnYXpGSLw_LMNFaJ_M';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ========== 全局状态 ==========
         let currentUser = null;
         let currentPartner = null;
         let currentPanel = 'notes';
 
-        // ========== 工具函数 ==========
         function $(id) { return document.getElementById(id); }
         function show(id) { $(id).classList.remove('hidden'); }
         function hide(id) { $(id).classList.add('hidden'); }
@@ -283,7 +267,6 @@
             return `${d.getMonth()+1}/${d.getDate()} ${time}`;
         }
 
-        // ========== 初始化 ==========
         window.addEventListener('load', async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
@@ -292,7 +275,6 @@
             }
         });
 
-        // ========== 登录注册 ==========
         async function handleLogin() {
             const email = $('login-email').value.trim();
             const password = $('login-password').value;
@@ -319,7 +301,6 @@
             location.reload();
         }
 
-        // ========== 伴侣绑定 ==========
         async function loadPartner() {
             const { data: profile } = await supabase
                 .from('profiles')
@@ -368,7 +349,6 @@
             alert('绑定成功！');
         }
 
-        // ========== 导航切换 ==========
         function switchPanel(panel) {
             currentPanel = panel;
             ['notes','events','memo','book'].forEach(p => hide(`panel-${p}`));
@@ -386,7 +366,6 @@
         $('nav-book').onclick = () => switchPanel('book');
         $('nav-menu').onclick = () => openSidebar();
 
-        // ========== 纸条 ==========
         async function sendNote() {
             const content = $('note-input').value.trim();
             if (!content) return;
@@ -477,7 +456,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // ========== 备忘录 ==========
         async function addMemo() {
             const content = $('memo-input').value.trim();
             if (!content) return;
@@ -498,7 +476,6 @@
             $('memo-list').innerHTML = memos.map(m => `<p>${m.content} <small>${formatTime(m.created_at)}</small></p>`).join('');
         }
 
-        // ========== 约会 ==========
         let currentEventStatus = 'planned';
         function showEventForm(status) {
             currentEventStatus = status;
@@ -572,7 +549,6 @@
             loadEvents();
         }
 
-        // ========== 纪念日 ==========
         async function loadAnniversaries() {
             if (!currentPartner) return;
             const { data } = await supabase
@@ -612,7 +588,6 @@
             showEventForm('requested');
         }
 
-        // ========== 时光轴 ==========
         async function loadTimeline() {
             if (!currentPartner) {
                 $('timeline').innerHTML = '<p>绑定伴侣后可回顾时光</p>';
@@ -657,7 +632,6 @@
             $('timeline').innerHTML = html || '<p>还没有共同记录，开始写吧。</p>';
         }
 
-        // ========== 侧边栏 ==========
         function openSidebar() {
             $('sidebar').classList.add('open');
             $('overlay').classList.add('show');
@@ -669,7 +643,6 @@
             $('overlay').classList.remove('show');
         }
 
-        // 定期刷新（当页面可见时）
         setInterval(() => {
             if (!document.hidden && currentUser) {
                 if (currentPanel === 'notes') loadNotes();
@@ -678,7 +651,6 @@
             }
         }, 5000);
 
-        // 注册 Service Worker（PWA）
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js');
