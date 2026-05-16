@@ -458,7 +458,6 @@
             loadNotes();
         }, () => alert('定位失败'));
     }
-    async function loadNotes() {
     async function loadNotes(isInitial = true) {
     if (!currentUser) return;
     if (!currentPartner) {
