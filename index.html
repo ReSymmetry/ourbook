@@ -268,45 +268,38 @@
         let currentPartner = null;
         let currentPanel = 'notes';
 
-        function $(id) { return document.getElementById(id); }
-        function show(id) { $(id).classList.remove('hidden'); }
-        function hide(id) { $(id).classList.add('hidden'); }
-        function formatTime(date) {
-            const d = new Date(date);
-            const now = new Date();
-            const isToday = d.toDateString() === now.toDateString();
-            const time = d.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            if (isToday) return time;
-            return `${d.getMonth()+1}/${d.getDate()} ${time}`;
-        }
-        function showSignUpPage() {
-    document.getElementById('login-page').classList.add('hidden');
-    document.getElementById('signup-page').classList.remove('hidden');
-    // 清空注册表单
-    document.getElementById('signup-email').value = '';
-    document.getElementById('signup-password').value = '';
-}
-        function showLoginPage() {
-    document.getElementById('signup-page').classList.add('hidden');
-    document.getElementById('login-page').classList.remove('hidden');
-    // 清空登录表单
-    document.getElementById('login-email').value = '';
-    document.getElementById('login-password').value = '';
-}
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
+ // 工具函数
+    function $(id) { return document.getElementById(id); }
+    function show(id) { $(id).classList.remove('hidden'); }
+    function hide(id) { $(id).classList.add('hidden'); }
+    function formatTime(date) {
+        const d = new Date(date);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        const time = d.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        if (isToday) return time;
+        return `${d.getMonth()+1}/${d.getDate()} ${time}`;
+    }
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
 
-        window.addEventListener('load', async () => {
-            const { data: { session } } = await db.auth.getSession();
-            if (session?.user) {
-                currentUser = session.user;
-                afterLogin();
-            }
-        });
-     
+    // 页面切换
+    function showSignUpPage() {
+        hide('login-page');
+        show('signup-page');
+        $('signup-email').value = '';
+        $('signup-password').value = '';
+    }
+    function showLoginPage() {
+        hide('signup-page');
+        show('login-page');
+        $('login-email').value = '';
+        $('login-password').value = '';
+    }
+
         async function handleLogin() {
             const email = $('login-email').value.trim();
             const password = $('login-password').value;
