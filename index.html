@@ -162,7 +162,27 @@
         <button onclick="handleLogin()" style="width:100%;">登录</button>
         <button onclick="handleSignUp()" class="secondary" style="width:100%; margin-top:8px;">注册</button>
     </div>
+<!-- 登录页 -->
+<div id="login-page">
+    <h2 style="margin-bottom:20px;">📖 我们的书</h2>
+    <input type="email" id="login-email" placeholder="邮箱">
+    <input type="password" id="login-password" placeholder="密码">
+    <button onclick="handleLogin()" style="width:100%;">登录</button>
+    <p style="text-align:center; margin-top:12px; font-size:14px; color:var(--sub);">
+        还没有账号？<a href="#" onclick="showSignUpPage()">去注册</a>
+    </p>
+</div>
 
+<!-- 注册页 -->
+<div id="signup-page" class="hidden">
+    <h2 style="margin-bottom:20px;">📝 创建账号</h2>
+    <input type="email" id="signup-email" placeholder="邮箱">
+    <input type="password" id="signup-password" placeholder="密码（至少6位）">
+    <button onclick="handleSignUp()" style="width:100%;">注册</button>
+    <p style="text-align:center; margin-top:12px; font-size:14px; color:var(--sub);">
+        已有账号？<a href="#" onclick="showLoginPage()">去登录</a>
+    </p>
+</div>
     <div id="main-page" class="hidden">
         <nav>
             <button id="nav-notes" class="active">💬 纸条</button>
@@ -289,11 +309,18 @@
             afterLogin();
         }
         async function handleSignUp() {
-            const email = $('login-email').value.trim();
-            const password = $('login-password').value;
-            const { data, error } = await db.auth.signUp({ email, password });
-            if (error) return alert('注册失败：' + error.message);
-            alert('注册成功！请登录。');
+    const email = $('signup-email').value.trim();
+    const password = $('signup-password').value.trim();
+
+    if (!email) return alert('请输入邮箱地址');
+    if (!password) return alert('请输入密码');
+    if (password.length < 6) return alert('密码至少需要6位');
+
+    const { data, error } = await db.auth.signUp({ email, password });
+    if (error) return alert('注册失败：' + error.message);
+    alert('注册成功！现在可以去登录了。');
+    showLoginPage(); // 自动切回登录页
+}
         }
         async function afterLogin() {
             // 确保 profiles 存在
