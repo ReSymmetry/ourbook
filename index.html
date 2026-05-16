@@ -276,6 +276,7 @@
     let currentPanel = 'notes';
     let oldestNoteTime = null;
     let loadingMore = false;
+    let userManuallyScrolledUp = false;
 
     function $(id) { return document.getElementById(id); }
     function show(id) { $(id).classList.remove('hidden'); }
@@ -421,6 +422,9 @@
         });
         if (error) return alert('发送失败：' + error.message);
         $('note-input').value = '';
+        userManuallyScrolledUp = false;
+// 如果使用 loadNotes()，则 loadNotes 内部的判断会生效；如果使用追加方式，直接滚动
+container.scrollTop = container.scrollHeight;
         loadNotes();
     }
     async function sendImage() {
@@ -440,6 +444,9 @@
             author_id: currentUser.id,
             shared_with: currentPartner.id
         });
+        userManuallyScrolledUp = false;
+// 如果使用 loadNotes()，则 loadNotes 内部的判断会生效；如果使用追加方式，直接滚动
+container.scrollTop = container.scrollHeight;
         loadNotes();
     }
     async function sendLocation() {
@@ -455,6 +462,9 @@
                 author_id: currentUser.id,
                 shared_with: currentPartner.id
             });
+            userManuallyScrolledUp = false;
+// 如果使用 loadNotes()，则 loadNotes 内部的判断会生效；如果使用追加方式，直接滚动
+container.scrollTop = container.scrollHeight;
             loadNotes();
         }, () => alert('定位失败'));
     }
@@ -488,7 +498,9 @@
         container.appendChild(div);
     });
 
+    if (!userManuallyScrolledUp) {
     container.scrollTop = container.scrollHeight;
+    };
 
     // 记录当前列表中最老消息的时间（用于加载更早的消息）
     oldestNoteTime = notes.length > 0 ? notes[0].created_at : null;
@@ -525,8 +537,51 @@
 
 async function loadMoreNotes() {
     if (loadingMore) return;
+    if (!oldestNoteTime) {
+        // 如果没有记录最早时间，直接重新加载
+        loadNotes();
+        return;
+    }
     loadingMore = true;
-    await loadNotes(false);
+
+    const { data: notes, error } = await db.from('notes')
+        .select('*')
+        .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false })
+        .lt('created_at', oldestNoteTime)
+        .limit(50);
+
+    if (error) {
+        console.error(error);
+        loadingMore = false;
+        return;
+    }
+
+    if (notes.length === 0) {
+        alert('没有更早的消息了');
+        $('load-more-btn').style.display = 'none';
+        loadingMore = false;
+        return;
+    }
+
+    notes.reverse(); // 变成旧→新
+
+    const container = $('notes-list');
+    const currentScroll = container.scrollTop;
+    const oldHeight = container.scrollHeight;
+
+    notes.forEach(note => {
+        const div = createNoteDiv(note);
+        container.insertBefore(div, container.firstChild);
+    });
+
+    // 维持滚动位置，避免跳动
+    const newHeight = container.scrollHeight;
+    container.scrollTop = currentScroll + (newHeight - oldHeight);
+
+    oldestNoteTime = notes[0].created_at;
+    $('load-more-btn').style.display = notes.length < 50 ? 'none' : 'block';
+    loadingMore = false;
 }
     async function addMemo() {
         if (!currentUser) return alert('请先登录');
@@ -723,7 +778,11 @@ async function loadMoreNotes() {
             if (currentPanel === 'memo') loadMemos();
         }
     }, 5000);
-
+  $('notes-list').addEventListener('scroll', () => {
+    const container = $('notes-list');
+    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+    userManuallyScrolledUp = !atBottom;
+});
     window.addEventListener('load', async () => {
         const { data: { session } } = await db.auth.getSession();
         if (session?.user) {
