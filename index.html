@@ -462,13 +462,14 @@
     if (!currentUser) return;
     if (!currentPartner) {
         $('notes-list').innerHTML = '<p style="color:var(--sub);">绑定伴侣后可互发纸条</p>';
+        $('load-more-btn').style.display = 'none';
         return;
     }
 
     const { data: notes, error } = await db.from('notes')
         .select('*')
         .or(`author_id.eq.${currentUser.id},shared_with.eq.${currentUser.id}`)
-        .order('created_at', { ascending: false })   // ← 先倒序，取最新的 50 条
+        .order('created_at', { ascending: false })   // 先倒序取最新 50 条
         .limit(50);
 
     if (error) {
@@ -476,39 +477,29 @@
         return;
     }
 
-    // ← 关键：反转数组，让消息变成旧→新
+    // 反转数组，变成旧消息在上、新消息在下
     notes.reverse();
 
     const container = $('notes-list');
     container.innerHTML = '';
 
     notes.forEach(note => {
-        const isMine = note.author_id === currentUser.id;
-        const div = document.createElement('div');
-        div.className = `msg-row ${isMine ? 'msg-mine' : 'msg-other'}`;
-        let contentHTML = '';
-        if (note.type === 'image') {
-            contentHTML = `<img src="${escapeHtml(note.content)}" alt="图片">`;
-        } else if (note.type === 'location') {
-            const [lat, lng] = note.content.split(',');
-            contentHTML = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank">📍 查看位置</a>`;
-        } else {
-            contentHTML = escapeHtml(note.content);
-        }
-        div.innerHTML = `
-            <div class="bubble ${isMine ? 'bubble-mine' : 'bubble-other'}">
-                <div>${contentHTML}</div>
-                <div class="bubble-meta">
-                    <span>${isMine ? '我' : (currentPartner?.email || 'TA')}</span>
-                    <span>${formatTime(note.created_at)}</span>
-                </div>
-            </div>`;
+        const div = createNoteDiv(note);   // 使用你已有的 createNoteDiv 函数
         container.appendChild(div);
     });
 
     container.scrollTop = container.scrollHeight;
-}
-function createNoteDiv(note) {
+
+    // 记录当前列表中最老消息的时间（用于加载更早的消息）
+    oldestNoteTime = notes.length > 0 ? notes[0].created_at : null;
+
+    // 如果返回了 50 条，说明可能还有更早的消息，显示按钮
+    if (notes.length === 50) {
+        $('load-more-btn').style.display = 'block';
+    } else {
+        $('load-more-btn').style.display = 'none';
+    }
+}function createNoteDiv(note) {
     const isMine = note.author_id === currentUser.id;
     const div = document.createElement('div');
     div.className = `msg-row ${isMine ? 'msg-mine' : 'msg-other'}`;
