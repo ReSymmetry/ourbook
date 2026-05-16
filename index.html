@@ -266,6 +266,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        function showSignUpPage() {
+    hide('login-page');
+    show('signup-page');
+    // 清空注册表单
+    $('signup-email').value = '';
+    $('signup-password').value = '';
+}
+
+function showLoginPage() {
+    hide('signup-page');
+    show('login-page');
+    // 清空登录表单
+    $('login-email').value = '';
+    $('login-password').value = '';
+}
         // ========== 唯一一次创建客户端实例，使用不同的变量名避免与全局 supabase 冲突 ==========
         const _supabaseUrl = 'https://mjcvcxfyffgaxawdkuow.supabase.co';
         const _supabaseKey = 'sb_publishable_QI9qne6m0CQq3JnYXpGSLw_LMNFaJ_M';
